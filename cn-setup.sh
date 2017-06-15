@@ -8,15 +8,14 @@ echo $MASTER_NAME
     setenforce permissive
 
 # Shares
-SHARE_HOME=/HOMES
+SHARE_HOMES=/home
 SHARE_APPS=/apps
-NFS_ON_MASTER=/cm/shared
-NFS_MOUNT=/cm/shared
+SHARE_SHARED=/cm/shared
 
-mkdir -p /cm
 mkdir -p /cm/local
-mkdir -p $SHARE_HOME
-mkdir -p $SHARE_APPS
+mkdir -p $SHARE_HOMES; chmod 0000 $SHARE_HOMES
+mkdir -p $SHARE_APPS;  chmod 0000 $SHARE_APPS
+mkdir -p $SHARE_SHARED;chmod 0000 $SHARE_SHARED
 
 # User
 HPC_USER=hpcuser
@@ -29,23 +28,19 @@ mount_nfs()
 
 	yum -y install nfs-utils nfs-utils-lib
 	
-	mkdir -p ${NFS_MOUNT}
-
 	showmount -e ${MASTER_NAME}
 	mount -t nfs ${MASTER_NAME}:${SHARE_APPS} ${SHARE_APPS}
-    mount -t nfs ${MASTER_NAME}:${NFS_ON_MASTER} ${NFS_MOUNT}
+        mount -t nfs ${MASTER_NAME}:${SHARE_HOMES} ${SHARE_HOMES}
+	mount -t nfs ${MASTER_NAME}:${SHARE_SHARED} ${SHARE_SHARED}
 	
-	echo "${MASTER_NAME}:${NFS_ON_MASTER} ${NFS_MOUNT} nfs defaults,nofail  0 0" >> /etc/fstab
-    echo "${MASTER_NAME}:${SHARE_APPS} ${SHARE_APPS} nfs defaults,nofail  0 0" >> /etc/fstab
-}
+	echo "${MASTER_NAME}:${SHARE_HOMES} ${SHARE_HOMES} nfs defaults,nofail  0 0" >> /etc/fstab
+        echo "${MASTER_NAME}:${SHARE_APPS} ${SHARE_APPS} nfs defaults,nofail  0 0" >> /etc/fstab
+        echo "${MASTER_NAME}:${SHARE_SHARED} ${SHARE_SHARED} nfs defaults,nofail  0 0" >> /etc/fstab
 
+}
 
 setup_user()
 {  
-
-	echo "$MASTER_NAME:$SHARE_HOME $SHARE_HOME    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
-	mount -a
-	mount
    
     groupadd -g $HPC_GID $HPC_GROUP
 
@@ -55,9 +50,8 @@ setup_user()
     # Disable tty requirement for sudo
     sed -i 's/^Defaults[ ]*requiretty/# Defaults requiretty/g' /etc/sudoers
 
-	useradd -c "HPC User" -g $HPC_GROUP -d $SHARE_HOME/$HPC_USER -s /bin/bash -u $HPC_UID $HPC_USER
+    useradd -c "HPC User" -g $HPC_GROUP -u $HPC_UID $HPC_USER
 
-    chown $HPC_USER:$HPC_GROUP $NFS_MOUNT	
 }
 
 
@@ -83,19 +77,19 @@ install_pbspro()
 
 	    rpm -ivh --nodeps /mnt/CentOS_7/pbspro-execution-14.1.0-13.1.x86_64.rpm
 
-        cat > /etc/pbs.conf << EOF
-PBS_SERVER=$MASTER_HOSTNAME
-PBS_START_SERVER=0
-PBS_START_SCHED=0
-PBS_START_COMM=0
-PBS_START_MOM=1
-PBS_EXEC=/opt/pbs
-PBS_HOME=/var/spool/pbs
-PBS_CORE_LIMIT=unlimited
-PBS_SCP=/bin/scp
-EOF
+        cat > /etc/pbs.conf <<-EOF
+	PBS_SERVER=$MASTER_HOSTNAME
+	PBS_START_SERVER=0
+	PBS_START_SCHED=0
+	PBS_START_COMM=0
+	PBS_START_MOM=1
+	PBS_EXEC=/opt/pbs
+	PBS_HOME=/cm/shared/var/spool/pbs
+	PBS_CORE_LIMIT=unlimited
+	PBS_SCP=/bin/scp
+	EOF
 
-		echo '$clienthost '$MASTER_NAME > /var/spool/pbs/mom_priv/config
+	echo '$clienthost '$MASTER_NAME > /var/spool/pbs/mom_priv/config
         /etc/init.d/pbs start
 
 		# setup the self register script
@@ -125,6 +119,6 @@ mount_nfs
 setup_user
 
 
-install_pbspro
+# install_pbspro
 
 exit 0
