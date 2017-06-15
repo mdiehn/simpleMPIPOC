@@ -293,13 +293,13 @@
     ],
     "mastervmScripts": {
       "scriptsToDownload": [
-        "https://raw.githubusercontent.com/grandparoach/simpleMPIPOC/CDAD/master-setup.sh"
+        "https://raw.githubusercontent.com/mdiehn/simpleMPIPOC/CDAD/master-setup.sh"
       ],
       "commandToExecute": "bash master-setup.sh"
     },
     "vmScripts": {
       "scriptsToDownload": [
-        "https://raw.githubusercontent.com/grandparoach/simpleMPIPOC/CDAD/cn-setup.sh"
+        "https://raw.githubusercontent.com/mdiehn/simpleMPIPOC/CDAD/cn-setup.sh"
       ],
       "commandToExecute": "[concat('bash cn-setup.sh ', variables('masterBoxName'))]"
     },
