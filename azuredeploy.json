@@ -366,7 +366,7 @@
     
     "mastervmScripts": {
       "scriptsToDownload": [
-        "https://raw.githubusercontent.com/grandparoach/simpleMPIPOC/NOAA/master-setup.sh"
+        "https://raw.githubusercontent.com/mdiehn/simpleMPIPOC/master/master-setup.sh"
       ],
       "commandToExecute": "bash master-setup.sh"
     },
@@ -374,7 +374,7 @@
     "cnSetupScript": "cn-setup.sh",
     "vmScripts": {
       "scriptsToDownload": [
-        "https://raw.githubusercontent.com/grandparoach/simpleMPIPOC/NOAA/cn-setup.sh"
+        "https://raw.githubusercontent.com/mdiehn/simpleMPIPOC/master/cn-setup.sh"
       ],
       "commandToExecute": "[concat('bash cn-setup.sh ', variables('masterBoxName'))]"
     }
