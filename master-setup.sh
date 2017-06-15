@@ -11,8 +11,8 @@ fi
 # Shares
 SHARE_HOME=/HOMES
 SHARE_APPS=/apps
-NFS_DATA=/cm/shared
-
+SHARE_CMSHARED=/cm/shared
+NFS_DATA=/srv/data
 # User
 HPC_USER=hpcuser
 HPC_UID=7007
@@ -63,15 +63,16 @@ EOF
     if [ -n "$createdPartitions" ]; then
         devices=`echo $createdPartitions | wc -w`
         mdadm --create /dev/md10 --level 0 --raid-devices $devices $createdPartitions
-        mkfs -t ext4 /dev/md10
-        echo "/dev/md10 $mountPoint ext4 defaults,nofail 0 2" >> /etc/fstab
-        mount /dev/md10
+	vgcreate vg /dev/md10
+	lvcreate -L 200G -n home vg
+	lvcreate -L 200G -n apps vg
+	lvcreate -L 200G -n shared vg
+        mkfs -t xfs /dev/vg/home
+	mkfs -t xfs /dev/vg/apps
+	mkfs -t xfs /dev/vg/shared
+	
     fi
 
-#	mkfs -t $filesystem $createdPartitions
-#	echo "$createdPartitions $mountPoint $filesystem defaults,nofail 0 2" >> /etc/fstab
-	
-#	mount $createdPartitions
 }
 
 setup_disks()
@@ -97,20 +98,21 @@ setup_disks()
 	
 	dataDevices="`fdisk -l | grep '^Disk /dev/' | grep $dataDiskSize | awk '{print $2}' | awk -F: '{print $1}' | sort | head -$nbDisks | tr '\n' ' ' | sed 's|/dev/||g'`"
     
-    mkdir -p $SHARE_HOME
-    mkdir -p $SHARE_APPS
-    mkdir -p /cm
-    mkdir -p /cm/local
-	mkdir -p $NFS_DATA
+    setup_data_disks $NFS_DATA "xfs" "$dataDevices" "nfsdata"
 
-	setup_data_disks $NFS_DATA "xfs" "$dataDevices" "nfsdata"
+    echo "/dev/vg/home   /home      xfs defaults,nofail 0 2" >> /etc/fstab
+    ln -s /home /HOMES
+    echo "/dev/vg/apps   /apps      xfs defaults,nofail 0 2" >> /etc/fstab
+    echo "/dev/vg/shared /cm/shared xfs defaults,nofail 0 2" >> /etc/fstab
 
-    chown $HPC_USER:$HPC_GROUP $NFS_DATA
-	
-	echo "$NFS_DATA    *(rw,async)" >> /etc/exports
-    echo "$SHARE_APPS  *(rw,async)" >> /etc/exports
-    echo "$SHARE_HOME  *(rw,async)" >> /etc/exports
-    
+    for dir in /home /apps /cm/shared
+    do
+        mkdir -pv $dir
+        chmod 0000 $dir
+        mount $dir
+	echo "$dir *(rw,async)" >> /etc/exports
+    done
+
     systemctl enable rpcbind || echo "Already enabled"
     systemctl enable nfs-server || echo "Already enabled"
     systemctl start rpcbind || echo "Already enabled"
