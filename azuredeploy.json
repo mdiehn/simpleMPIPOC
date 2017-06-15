@@ -368,7 +368,8 @@
       "location": "[variables('location')]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -474,7 +475,8 @@
       "name": "[concat('bruce-nic-az', padLeft(copyindex(1), 2, '0'))]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), padleft(copyindex(1), 2, '0'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), padleft(copyindex(1), 2, '0'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "copy": {
         "name": "computeNodeNicCopy",
